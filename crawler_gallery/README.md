@@ -60,8 +60,13 @@ Navigate to:
 http://127.0.0.1:8000
 ```
 
-### 3. Start Crawling
-Enter any target webpage URL into the input bar and click **Start Deep Crawl**. Custom settings like crawl depth, maximum pages, and domain restrictions can be configured by toggling the settings drawer.
+### 4. Deploying to Vercel ⚡
+This project is pre-configured for Vercel with:
+- `vercel.json` routing both the Python backend and static frontend.
+- `api/index.py` serverless function adapter.
+- Automatic **Client-Side Resilient Fallback Engine** to overcome Vercel's 10-15s serverless function timeout and cloud datacenter IP blocks (Cloudflare 403 blocks).
+
+Simply push this repository to GitHub and import it into your Vercel Dashboard. Vercel will automatically build and deploy it!
 
 ---
 
@@ -69,6 +74,8 @@ Enter any target webpage URL into the input bar and click **Start Deep Crawl**. 
 
 ```
 f:/Projects/crawler_gallery/
+  ├── api/
+  │   └── index.py             # Vercel Serverless Function entrypoint
   ├── app/
   │   ├── __init__.py
   │   ├── main.py              # FastAPI server, SSE stream, CORS, static routes
@@ -81,9 +88,11 @@ f:/Projects/crawler_gallery/
   │   │   └── style.css        # Glassmorphic dark theme, responsive grid, animations
   │   └── js/
   │       ├── app.js           # Main controller, SSE event stream listener
+  │       ├── clientCrawler.js # Resilient client-side fallback crawler
   │       ├── gallery.js       # Gallery manager, layout switcher, card rendering
   │       ├── lightbox.js      # Fullscreen interactive lightbox modal
   │       └── utils.js         # Toasts, clipboard copy, file downloads
+  ├── vercel.json              # Vercel deployment configuration
   ├── requirements.txt         # Dependencies
   ├── run.py                   # Port-detecting application launcher
   └── start.bat                # Windows quick launcher

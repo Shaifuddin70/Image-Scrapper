@@ -1,5 +1,6 @@
 import { GalleryManager } from './gallery.js';
 import { Lightbox } from './lightbox.js';
+import { ClientCrawler } from './clientCrawler.js';
 import { formatSeconds, showToast, truncateString } from './utils.js';
 
 class CrawlerApp {
@@ -38,6 +39,9 @@ class CrawlerApp {
 
     // State
     this.eventSource = null;
+    this.clientCrawler = null;
+    this.totalImagesFound = 0;
+    this.userCancelled = false;
     this.currentSessionId = null;
     this.crawlStartTime = null;
     this.crawlTimerInterval = null;
@@ -164,6 +168,8 @@ class CrawlerApp {
     const sseUrl = `/api/crawl/stream?${query.toString()}`;
 
     // Update UI state to Crawling
+    this.totalImagesFound = 0;
+    this.userCancelled = false;
     this.setCrawlerState(true);
     this.logTerminal(`Starting recursive crawl on: ${targetUrl}`, 'info');
     this.logTerminal(`Config: Depth=${depth}, MaxPages=${maxPages}, SameDomain=${sameDomain}`, 'info');
@@ -198,8 +204,9 @@ class CrawlerApp {
     this.eventSource.addEventListener('images_found', (e) => {
       try {
         const data = JSON.parse(e.data);
+        this.totalImagesFound += data.images.length;
         this.gallery.addImages(data.images);
-        this.statImages.textContent = data.total_images;
+        this.statImages.textContent = this.totalImagesFound;
         this.logTerminal(`Discovered ${data.images.length} new images on ${data.page_url}`, 'success');
       } catch (err) {}
     });
@@ -216,12 +223,19 @@ class CrawlerApp {
       try {
         const data = JSON.parse(e.data);
         this.logTerminal(`Page error on ${data.url}: ${data.error}`, 'warn');
+        if (data.error && (data.error.includes('403') || data.error.includes('Blocked')) && this.totalImagesFound === 0) {
+          this.triggerFallback(targetUrl, depth, maxPages, sameDomain, includeMeta);
+        }
       } catch (err) {}
     });
 
     this.eventSource.addEventListener('complete', (e) => {
       try {
         const data = JSON.parse(e.data);
+        if (data.total_images === 0 && !this.userCancelled) {
+          this.triggerFallback(targetUrl, depth, maxPages, sameDomain, includeMeta);
+          return;
+        }
         this.logTerminal(`Crawl completed! Total ${data.total_images} images gathered across ${data.pages_crawled} pages.`, 'success');
         showToast(`🎉 Crawl finished! Found ${data.total_images} images.`, 'success', 6000);
       } catch (err) {}
@@ -235,15 +249,73 @@ class CrawlerApp {
     });
 
     this.eventSource.addEventListener('error', (e) => {
-      if (this.isCrawling) {
+      if (this.isCrawling && !this.userCancelled) {
+        if (this.totalImagesFound === 0) {
+          this.triggerFallback(targetUrl, depth, maxPages, sameDomain, includeMeta);
+          return;
+        }
         this.logTerminal('Connection closed or completed.', 'info');
         this.finishCrawl('completed');
       }
     });
   }
 
+  triggerFallback(targetUrl, depth, maxPages, sameDomain, includeMeta) {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+
+    this.logTerminal('⚠️ Cloud serverless engine blocked or unavailable. Switching to Client-Side Resilient Engine...', 'warn');
+    showToast('Switching to Client-Side Crawler Engine...', 'info');
+
+    this.clientCrawler = new ClientCrawler({
+      url: targetUrl,
+      depth: depth,
+      maxPages: maxPages,
+      sameDomain: sameDomain,
+      includeMeta: includeMeta,
+      onInit: (data) => {
+        this.logTerminal(`Client Engine started for domain: ${data.start_domain}`, 'info');
+      },
+      onPageStart: (data) => {
+        this.currentScrapeUrl.textContent = truncateString(data.url, 60);
+        this.currentScrapeUrl.title = data.url;
+        this.statPages.textContent = `${data.pages_crawled} / ${maxPages}`;
+        this.statQueue.textContent = `${data.queue_size} in queue`;
+        this.logTerminal(`Client scanning [Depth ${data.depth}]: ${data.url}`, 'info');
+      },
+      onImagesFound: (data) => {
+        this.totalImagesFound += data.images.length;
+        this.gallery.addImages(data.images);
+        this.statImages.textContent = this.totalImagesFound;
+        this.logTerminal(`Discovered ${data.images.length} images on ${data.page_url}`, 'success');
+      },
+      onPageDone: (data) => {
+        this.statPages.textContent = `${data.pages_crawled} / ${maxPages}`;
+        this.statQueue.textContent = `${data.queue_size} in queue`;
+      },
+      onPageError: (data) => {
+        this.logTerminal(`Fetch notice on ${data.url}: ${data.error}`, 'warn');
+      },
+      onComplete: (data) => {
+        this.logTerminal(`Crawl finished! Total ${this.totalImagesFound} images gathered across ${data.pages_crawled} pages.`, 'success');
+        showToast(`🎉 Crawl finished! Found ${this.totalImagesFound} images.`, 'success', 6000);
+        this.finishCrawl('completed');
+      }
+    });
+
+    this.clientCrawler.start();
+  }
+
   async stopCrawl() {
+    this.userCancelled = true;
     if (!this.isCrawling) return;
+
+    if (this.clientCrawler) {
+      this.clientCrawler.stop();
+      this.clientCrawler = null;
+    }
 
     if (this.currentSessionId) {
       try {
@@ -265,6 +337,10 @@ class CrawlerApp {
     if (this.eventSource) {
       this.eventSource.close();
       this.eventSource = null;
+    }
+    if (this.clientCrawler) {
+      this.clientCrawler.stop();
+      this.clientCrawler = null;
     }
     this.setCrawlerState(false, finalStatus);
   }

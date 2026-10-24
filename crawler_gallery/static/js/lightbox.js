@@ -190,20 +190,33 @@ export class Lightbox {
     this.titleEl.textContent = item.alt || item.url.split('/').pop().split('?')[0] || 'Image';
     this.titleEl.title = item.url;
 
-    // Set preview image with proxy fallback
+    // Set preview image with multi-tier proxy fallback
     this.imgElement.src = '';
-    const tempImg = new Image();
-    tempImg.onload = () => {
-      this.imgElement.src = item.url;
-      this.metaDimEl.textContent = `${tempImg.naturalWidth} × ${tempImg.naturalHeight}`;
+    let proxyStage = 0;
+    const tryLoadLightbox = (srcUrl) => {
+      const tempImg = new Image();
+      tempImg.onload = () => {
+        this.imgElement.src = srcUrl;
+        if (tempImg.naturalWidth && tempImg.naturalHeight) {
+          this.metaDimEl.textContent = `${tempImg.naturalWidth} × ${tempImg.naturalHeight}`;
+        }
+      };
+      tempImg.onerror = () => {
+        if (proxyStage === 0) {
+          proxyStage = 1;
+          tryLoadLightbox(`/api/proxy-image?url=${encodeURIComponent(item.url)}`);
+        } else if (proxyStage === 1) {
+          proxyStage = 2;
+          tryLoadLightbox(`https://api.allorigins.win/raw?url=${encodeURIComponent(item.url)}`);
+        } else {
+          this.imgElement.src = item.url;
+          this.metaDimEl.textContent = 'Hotlink Protected';
+        }
+      };
+      tempImg.src = srcUrl;
     };
-    tempImg.onerror = () => {
-      // Try backend proxy fallback
-      const proxyUrl = `/api/proxy-image?url=${encodeURIComponent(item.url)}`;
-      this.imgElement.src = proxyUrl;
-      this.metaDimEl.textContent = 'Auto Proxied';
-    };
-    tempImg.src = item.url;
+
+    tryLoadLightbox(item.url);
 
     this.metaFormatEl.textContent = item.format || 'IMAGE';
     

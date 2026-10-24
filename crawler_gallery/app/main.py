@@ -84,9 +84,10 @@ async def stream_crawl(
         sse_event_generator(),
         media_type="text/event-stream",
         headers={
-            "Cache-Control": "no-cache",
+            "Cache-Control": "no-cache, no-transform",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
+            "Content-Type": "text/event-stream; charset=utf-8",
         }
     )
 

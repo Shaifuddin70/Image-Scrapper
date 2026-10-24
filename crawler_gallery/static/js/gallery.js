@@ -273,8 +273,9 @@ export class GalleryManager {
     const wrapEl = card.querySelector('.card-media-wrap');
     const resEl = card.querySelector('.card-resolution-tag');
 
-    // Progressive image loading with auto CORS-proxy fallback
-    const tryLoad = (srcUrl, isProxied = false) => {
+    // Progressive image loading with multi-tier CORS/hotlink proxy fallback
+    let proxyStage = 0;
+    const tryLoad = (srcUrl) => {
       imgEl.src = srcUrl;
       imgEl.onload = () => {
         wrapEl.classList.remove('loading');
@@ -286,12 +287,14 @@ export class GalleryManager {
       };
 
       imgEl.onerror = () => {
-        if (!isProxied) {
-          // Fallback to backend proxy
-          const proxiedUrl = `/api/proxy-image?url=${encodeURIComponent(item.url)}`;
-          tryLoad(proxiedUrl, true);
+        if (proxyStage === 0) {
+          proxyStage = 1;
+          tryLoad(`/api/proxy-image?url=${encodeURIComponent(item.url)}`);
+        } else if (proxyStage === 1) {
+          proxyStage = 2;
+          tryLoad(`https://api.allorigins.win/raw?url=${encodeURIComponent(item.url)}`);
         } else {
-          // If proxy also failed, show clean fallback placeholder
+          // If all proxies failed, show clean placeholder
           wrapEl.classList.remove('loading');
           wrapEl.classList.add('failed');
           wrapEl.innerHTML = `
