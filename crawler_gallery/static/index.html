@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#090d16">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>PrismCrawl — Deep Web Image Crawler & Visual Gallery</title>
+  <meta name="description" content="Recursively crawl web pages, extract high-resolution images, and explore them in an ultra-modern responsive gallery with batch download and lightbox.">
+  
+  <!-- Modern Typography from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+</head>
+<body>
+
+  <!-- Top Sticky Navigation Bar -->
+  <header class="app-header">
+    <div class="nav-inner">
+      <div class="brand-wrapper" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <div class="brand-icon">✦</div>
+        <div class="brand-text">
+          <h1>Prism<span class="gradient-text">Crawl</span></h1>
+          <span class="brand-tagline">Recursive Image Scraper & Gallery</span>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <div class="status-badge" id="app-status-badge">
+          <span class="dot"></span>
+          <span id="app-status-text">Engine Ready</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Application Container -->
+  <main class="app-container">
+
+    <!-- Hero Command Center Panel -->
+    <section class="hero-panel" id="hero-control-center">
+      <div class="hero-headline">
+        <h2>Fetch & Traverse <span class="gradient-text">Every Image</span> Online</h2>
+        <p>Enter any URL. PrismCrawl scans the webpage, follows child links recursively, and streams discovered images in real time into your high-definition gallery.</p>
+      </div>
+
+      <form class="crawl-form" id="crawl-form">
+        <!-- URL Input & Start Button -->
+        <div class="crawl-input-group">
+          <div class="input-icon-wrapper">
+            <span class="url-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            </span>
+            <input 
+              type="text" 
+              id="crawl-url-input" 
+              class="crawl-url-input" 
+              placeholder="https://example.com/gallery or article URL..." 
+              required
+              autocomplete="off"
+            />
+            <button type="button" class="clear-input-btn" id="clear-url-btn" title="Clear input">✕</button>
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="btn-start-crawl">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Start Deep Crawl
+          </button>
+
+          <button type="button" class="btn btn-danger" id="btn-stop-crawl" style="display: none;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="6" y="6" width="12" height="12"></rect></svg>
+            Stop Crawling
+          </button>
+        </div>
+
+        <!-- Settings Toggle Row -->
+        <div class="settings-toggle-row">
+          <button type="button" class="toggle-link" id="toggle-settings-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            Crawler Configurations & Depth Settings
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+
+          <span style="font-size: 0.8rem; color: var(--text-dim);">
+            Anti-Hotlink Proxy Engine: <strong style="color: var(--success);">Active (Auto CORS Bypass)</strong>
+          </span>
+        </div>
+
+        <!-- Collapsible Settings Panel -->
+        <div class="settings-drawer" id="settings-drawer">
+          <!-- Crawl Depth Slider -->
+          <div class="setting-card">
+            <div class="setting-label">
+              <span>Crawl Depth (Link Levels)</span>
+              <span class="setting-value" id="depth-val">1 (Page + Direct Links)</span>
+            </div>
+            <div class="setting-control">
+              <input type="range" id="crawl-depth" min="0" max="3" value="1" step="1">
+            </div>
+          </div>
+
+          <!-- Max Pages Scanned -->
+          <div class="setting-card">
+            <div class="setting-label">
+              <span>Max Scanned Pages</span>
+              <span class="setting-value" id="max-pages-val">15 Pages</span>
+            </div>
+            <div class="setting-control">
+              <input type="range" id="crawl-max-pages" min="1" max="50" value="15" step="1">
+            </div>
+          </div>
+
+          <!-- Same Domain Toggle -->
+          <div class="setting-card">
+            <div class="setting-label">
+              <span>Domain Scope</span>
+              <span class="setting-value">Same Domain Only</span>
+            </div>
+            <div class="setting-control" style="justify-content: space-between;">
+              <span style="font-size: 0.8rem; color: var(--text-dim);">Follow internal links only</span>
+              <label class="switch">
+                <input type="checkbox" id="crawl-same-domain" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+
+          <!-- OpenGraph / Meta Banner Images -->
+          <div class="setting-card">
+            <div class="setting-label">
+              <span>Meta Images</span>
+              <span class="setting-value">OG & Social Banners</span>
+            </div>
+            <div class="setting-control" style="justify-content: space-between;">
+              <span style="font-size: 0.8rem; color: var(--text-dim);">Include header/preview cards</span>
+              <label class="switch">
+                <input type="checkbox" id="crawl-meta-images" checked>
+                <span class="slider-switch"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- Live Telemetry HUD -->
+    <section class="telemetry-panel" id="telemetry-panel">
+      <div class="telemetry-metrics-grid">
+        <div class="metric-box">
+          <div class="metric-icon-wrap images">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          </div>
+          <div class="metric-details">
+            <span class="metric-label">Images Found</span>
+            <span class="metric-value" id="stat-total-images">0</span>
+          </div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-icon-wrap pages">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          </div>
+          <div class="metric-details">
+            <span class="metric-label">Pages Scanned</span>
+            <span class="metric-value" id="stat-pages-scanned">0 / 15</span>
+          </div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-icon-wrap queue">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+          </div>
+          <div class="metric-details">
+            <span class="metric-label">Queue Size</span>
+            <span class="metric-value" id="stat-queue-size">0 in queue</span>
+          </div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-icon-wrap time">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          </div>
+          <div class="metric-details">
+            <span class="metric-label">Elapsed Time</span>
+            <span class="metric-value" id="stat-crawl-time">0:00</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current URL strip -->
+      <div class="current-scrape-strip">
+        <div class="current-scrape-info">
+          <span class="radar-dot"></span>
+          <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-secondary);">Crawling:</span>
+          <span class="current-url-display" id="current-scrape-url">Initializing connection...</span>
+        </div>
+        <button class="terminal-toggle" id="toggle-terminal-btn">Show Activity Log ▼</button>
+      </div>
+
+      <!-- Live Terminal Drawer -->
+      <div class="terminal-logs" id="terminal-logs"></div>
+    </section>
+
+    <!-- Gallery Control Ribbon -->
+    <section class="gallery-controls-bar">
+      <div class="controls-row-top">
+        <div class="gallery-title-area">
+          <h3>Discovered Gallery</h3>
+          <span class="count-chip" id="gallery-count-badge">0 / 0</span>
+          <span class="count-chip" id="selected-count-badge" style="display: none; background: rgba(6, 182, 212, 0.2); color: #22d3ee; border-color: rgba(6, 182, 212, 0.4);">
+            0 selected
+          </span>
+        </div>
+
+        <!-- Search inside gallery -->
+        <div class="gallery-search-wrap">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          <input type="text" id="gallery-search-input" placeholder="Filter by alt, filename or domain..." autocomplete="off">
+        </div>
+
+        <!-- View Layout Group -->
+        <div class="view-layout-group">
+          <button class="layout-btn active" data-layout="masonry-view" title="Masonry View">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"></rect><rect x="14" y="3" width="7" height="5"></rect><rect x="14" y="12" width="7" height="9"></rect><rect x="3" y="16" width="7" height="5"></rect></svg>
+          </button>
+          <button class="layout-btn" data-layout="grid-view" title="Uniform Grid">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+          </button>
+          <button class="layout-btn" data-layout="showcase-view" title="Showcase Cinematic">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Format Filter Pills & Batch Operations -->
+      <div class="controls-row-bottom">
+        <div class="filter-pills-list">
+          <span style="font-size: 0.78rem; color: var(--text-dim); margin-right: 0.25rem;">Format:</span>
+          <button class="filter-pill active" data-format="ALL">All Formats</button>
+          <button class="filter-pill" data-format="JPEG">JPEG</button>
+          <button class="filter-pill" data-format="PNG">PNG</button>
+          <button class="filter-pill" data-format="WEBP">WEBP</button>
+          <button class="filter-pill" data-format="SVG">SVG</button>
+          <button class="filter-pill" data-format="GIF">GIF</button>
+        </div>
+
+        <div class="batch-actions-area">
+          <button class="btn btn-secondary" id="btn-select-all" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;">
+            Select All
+          </button>
+          <button class="btn btn-primary" id="btn-download-selected" style="padding: 0.45rem 1rem; font-size: 0.82rem; border-radius: var(--radius-md);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            Download ZIP
+          </button>
+          <button class="btn btn-secondary" id="btn-export-urls" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;" title="Export list of direct image URLs as text file">
+            Export URLs
+          </button>
+          <button class="btn btn-ghost" id="btn-clear-gallery" style="padding: 0.45rem 0.75rem; font-size: 0.82rem;" title="Clear gallery items">
+            Clear
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Dynamic Gallery Stage -->
+    <section class="gallery-stage">
+      <!-- Empty State -->
+      <div class="gallery-empty-state" id="gallery-empty-state">
+        <div class="empty-state-icon">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+        </div>
+        <h3 class="empty-state-title">No Images Crawled Yet</h3>
+        <p class="empty-state-desc">Enter any target website URL above and click Start Deep Crawl to scan and traverse links in real time.</p>
+      </div>
+
+      <!-- Rendered Image Grid -->
+      <div class="gallery-grid masonry-view" id="gallery-container"></div>
+    </section>
+  </main>
+
+  <!-- Interactive Lightbox Modal -->
+  <div class="lightbox-modal" id="lightbox-modal">
+    <!-- Header -->
+    <div class="lightbox-header">
+      <div class="lightbox-info-group">
+        <span class="lightbox-counter" id="lightbox-counter">1 / 1</span>
+        <span class="lightbox-title" id="lightbox-title">Image Details</span>
+      </div>
+
+      <div class="lightbox-header-actions">
+        <!-- Desktop zoom and actions (hidden on mobile) -->
+        <button class="btn btn-secondary btn-icon lightbox-desktop-action" id="lightbox-btn-zoom-in" title="Zoom In (+)">+</button>
+        <button class="btn btn-secondary btn-icon lightbox-desktop-action" id="lightbox-btn-zoom-out" title="Zoom Out (-)">−</button>
+        <button class="btn btn-secondary btn-icon lightbox-desktop-action" id="lightbox-btn-zoom-reset" title="Reset Zoom">1:1</button>
+        <button class="btn btn-secondary lightbox-desktop-action" id="lightbox-btn-copy" style="padding: 0.45rem 0.85rem; font-size: 0.82rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy URL
+        </button>
+        <button class="btn btn-primary lightbox-desktop-action" id="lightbox-btn-download" style="padding: 0.45rem 1rem; font-size: 0.82rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download
+        </button>
+        
+        <!-- Dedicated Close Button - ALWAYS visible on all screens -->
+        <button class="btn btn-secondary btn-icon lightbox-close-btn" id="lightbox-btn-close" title="Close (Esc)">✕</button>
+      </div>
+    </div>
+
+    <!-- Center Stage -->
+    <div class="lightbox-stage" id="lightbox-stage">
+      <button class="lightbox-nav-btn lightbox-nav-prev" id="lightbox-btn-prev" title="Previous Image (←)">‹</button>
+      <div class="lightbox-img-wrap" id="lightbox-img-wrap">
+        <img id="lightbox-image" src="" alt="Full view" />
+      </div>
+      <button class="lightbox-nav-btn lightbox-nav-next" id="lightbox-btn-next" title="Next Image (→)">›</button>
+    </div>
+
+    <!-- Footer Controls & Metadata -->
+    <div class="lightbox-footer">
+      <!-- Mobile Quick Actions Bar (Visible on mobile, hidden on desktop) -->
+      <div class="lightbox-mobile-actions">
+        <button class="btn btn-secondary" id="mobile-lightbox-copy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy URL
+        </button>
+        <button class="btn btn-primary" id="mobile-lightbox-download">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+          Download
+        </button>
+      </div>
+
+      <!-- Compact Metadata Row -->
+      <div class="lightbox-meta-row">
+        <div class="meta-chips-group">
+          <span class="meta-pill" id="lightbox-meta-dim">Measuring...</span>
+          <span class="meta-pill format" id="lightbox-meta-format">JPEG</span>
+        </div>
+        <div class="meta-links-group">
+          <a href="#" target="_blank" rel="noopener noreferrer" class="lightbox-meta-link" id="lightbox-meta-source">Source Page ↗</a>
+          <a href="#" target="_blank" rel="noopener noreferrer" class="lightbox-meta-link" id="lightbox-meta-direct">Direct Link ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="/static/js/app.js"></script>
+</body>
+</html>
